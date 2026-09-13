@@ -52,4 +52,4 @@ class Graph:
         edges_data.append((1, new_id))  # Connect it to the NiceGUI node
 
         # Call the refresh method built into the decorated function
-        self.render_network_ui.refresh()
+        self.render_graph_ui.refresh()
