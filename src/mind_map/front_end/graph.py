@@ -27,17 +27,17 @@ class Graph:
 
     # ---- This is your callable UI method ----
     @ui.refreshable_method
-    def render_network_ui(self) -> None:
+    def render_graph_ui(self) -> None:
         """Renders the graph inside an isolated iframe to support <script> tags."""
         with ui.card().classes("w-full h-[500px] p-0 overflow-hidden"):
-            # 1. Generer rå HTML fra Pyvis
+            # 1. Generate raw HTML using Pyvis
             html_content = self.build_graph_html()
 
-            # 2. Konverter HTML til en trygg base64-streng som en iframe kan lese direkte
+            # 2. Convert HTML to base64-string an iframe can read it directly
             b64_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
             src_data = f"data:text/html;base64,{b64_html}"
 
-            # 3. LØSNING: Bruk en iframe i stedet for ui.html
+            # 3. Render the iframe using ui.element and inject the base64 encoded HTML
             ui.element('iframe').props(f'src="{src_data}"').classes("w-full h-full border-none")
 
 
