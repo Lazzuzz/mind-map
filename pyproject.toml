@@ -1,0 +1,20 @@
+[project]
+name = "mind-map"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "nicegui",
+    "pyvis"
+]
+
+[project.scripts]
+mind-map = "mind_map:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.workspace]
+members = []
