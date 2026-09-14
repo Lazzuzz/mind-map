@@ -16,6 +16,10 @@ ui.add_head_html(
         if (event.data.event === 'toggle_edge_request') {
             emitEvent('toggle_edge_request', {n1: event.data.node1, n2: event.data.node2});
         }
+        // NYTT EVENT:
+        if (event.data.event === 'node_moved') {
+            emitEvent('node_moved', {id: event.data.id, x: event.data.x, y: event.data.y});
+        }
     });
     </script>
 """
@@ -85,7 +89,7 @@ def handle_node_selection(e):
         # Fill node with it's current label
         node_name.set_value(current_label)
     else:
-        status_label.set_text("Ingen node valgt som referanse.")
+        status_label.set_text("No node chosen as reference.")
         status_label.classes(replace="text-amber-600 font-mono")
         node_name.set_value("")  # Tøm feltet hvis brukeren klikker i tomrommet
 
@@ -172,7 +176,7 @@ def handle_nodes_tracked(e):
             node_name.set_value(node_info["label"])
     elif len(current_selection) == 0:
         selected_node_id = None
-        status_label.set_text("Ingen node valgt.")
+        status_label.set_text("No node is chosen.")
         status_label.classes(replace="text-amber-600 font-mono")
         node_name.set_value("")
 
@@ -182,7 +186,7 @@ def handle_toggle_edge(e):
     n1 = e.args.get("n1")
     n2 = e.args.get("n2")
 
-    # Kjør logikken i nodes.py
+    # Run logic in nodes.py
     result = nodes.toggleEdge(n1, n2)
 
     if result == "added":
@@ -194,6 +198,15 @@ def handle_toggle_edge(e):
 
     # Refresh grafen umiddelbart for å vise endringen live
     mind_map_graph.render_graph_ui.refresh()
+
+def handle_node_moved(e):
+    """Mottar koordinater når en node slippes, og lagrer dem i Python-staten."""
+    node_id = e.args.get("id")
+    x = e.args.get("x")
+    y = e.args.get("y")
+
+    # Lagre posisjonen i staten (nodes.py) i bakgrunnen uden å refreshe UI
+    nodes.updateNodePosition(node_id, x, y)
 
 # 2. Input fields and event listeners
 node_name = ui.textarea(
@@ -207,6 +220,7 @@ node_name = ui.textarea(
 ui.on("node_selected", handle_node_selection)
 ui.on("nodes_tracked", handle_nodes_tracked)
 ui.on("toggle_edge_request", handle_toggle_edge)
+ui.on("node_moved", handle_node_moved)
 
 with ui.row().classes("gap-2 mt-2 items-center"):
     ui.button(

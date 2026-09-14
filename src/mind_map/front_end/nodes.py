@@ -48,6 +48,21 @@ class Nodes:
                     node["label"] = new_label
                     break
 
+    def updateNodePosition(self, node_id: int, x: int, y: int) -> None:
+        """Updates the X & Y coordinated of a node."""
+        try:
+            node_id = int(node_id)
+            x = int(x)
+            y = int(y)
+        except (TypeError, ValueError):
+            return
+
+        for node in nodes_data:
+            if node["id"] == node_id:
+                node["x"] = x
+                node["y"] = y
+                break
+
     def toggleEdge(self, node1: int, node2: int) -> str:
             """Adds an edge between two nodes if none exists, otherwhise remove the existing.
 
