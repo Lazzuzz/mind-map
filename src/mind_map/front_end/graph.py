@@ -68,22 +68,52 @@ class Graph:
 
             html = net.generate_html()
 
-            # Script that tracks what node is selected by iframe
+            # Script that tracks what node(s) is selected by iframe
             node_selector = """
-            <script type="text/javascript">
-            setTimeout(function() {
-                if (typeof network !== 'undefined') {
-                    network.on("selectNode", function(params) {
-                        var selectedId = params.nodes.length > 0 ? params.nodes[0] : null;
-                        window.parent.postMessage({event: 'node_selected', id: selectedId}, '*');
-                    });
-                    network.on("deselectNode", function() {
-                        window.parent.postMessage({event: 'node_selected', id: null}, '*');
-                    });
-                }
-            }, 400);
-            </script>
-            """
+                   <script type="text/javascript">
+                   setTimeout(function() {
+                       if (typeof network !== 'undefined') {
+                           var clickedNodes = [];
+
+                           network.on("click", function(params) {
+                               // Check if a user actually has selected a node
+                               var node_id = network.getNodeAt(params.pointer.DOM);
+
+                               if (node_id !== undefined) {
+                                   // If a node is in the list, the user might have clicked twice -> remove it
+                                   var index = clickedNodes.indexOf(node_id);
+                                   if (index > -1) {
+                                       clickedNodes.splice(index, 1);
+                                   } else {
+                                       clickedNodes.push(node_id);
+                                   }
+
+                                   // Send updated state to Python about what nodes are selected
+                                   window.parent.postMessage({event: 'nodes_tracked', list: clickedNodes}, '*');
+
+                                   // The instant the user has selected TWO nodes:
+                                   if (clickedNodes.length === 2) {
+                                       window.parent.postMessage({
+                                           event: 'toggle_edge_request',
+                                           node1: clickedNodes[0],
+                                           node2: clickedNodes[1]
+                                       }, '*');
+
+                                       // Reset the chosen nodes in UI
+                                       clickedNodes = [];
+                                       network.unselectAll();
+                                   }
+                               } else {
+                                   // If the user does not click on a node reset the state
+                                   clickedNodes = [];
+                                   network.unselectAll();
+                                   window.parent.postMessage({event: 'nodes_tracked', list: []}, '*');
+                               }
+                           });
+                       }
+                   }, 400);
+                   </script>
+                   """
             return html.replace("</body>", f"{node_selector}</body>")
 
 

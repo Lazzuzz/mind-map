@@ -35,3 +35,26 @@ class Nodes:
                 if node["id"] == node_id:
                     node["label"] = new_label
                     break
+
+    def toggleEdge(self, node1: int, node2: int) -> str:
+            """Adds an edge between two nodes if none exists, otherwhise remove the existing.
+
+            Returns a status ('added' or 'removed').
+            """
+            global edges_data
+            node1, node2 = int(node1), int(node2)
+
+            # Check for an existing edge in both directions
+            edge1 = (node1, node2)
+            edge2 = (node2, node1)
+
+            if edge1 in edges_data:
+                edges_data.remove(edge1)
+                return "removed"
+            elif edge2 in edges_data:
+                edges_data.remove(edge2)
+                return "removed"
+            else:
+                # Create a new edge between first and second selected node
+                edges_data.append(edge1)
+                return "added"

@@ -8,8 +8,12 @@ ui.add_head_html(
     """
     <script>
     window.addEventListener('message', function(event) {
-        if (event.data && event.data.event === 'node_selected') {
-            emitEvent('node_selected', {id: event.data.id});
+        if (!event.data) return;
+        if (event.data.event === 'nodes_tracked') {
+            emitEvent('nodes_tracked', {list: event.data.list});
+        }
+        if (event.data.event === 'toggle_edge_request') {
+            emitEvent('toggle_edge_request', {n1: event.data.node1, n2: event.data.node2});
         }
     });
     </script>
@@ -91,6 +95,49 @@ def save_node_edits(new_label: str):
     mind_map_graph.render_graph_ui.refresh()
     ui.notify("Node-tekst oppdatert!")
 
+def handle_nodes_tracked(e):
+    """Oppdaterer tekstfeltet som viser brukeren hva som er valgt."""
+    global selected_node_id
+    current_selection = e.args.get("list", [])
+
+    if len(current_selection) == 1:
+        selected_node_id = current_selection[0]
+        status_label.set_text(
+            f"Valgt node: ID {selected_node_id}. (Klikk på en node til for å koble/frakoble)"
+        )
+        status_label.classes(replace="text-blue-600 font-mono")
+
+        # Fyll textarea for redigering (valgfritt, bevarer din gamle flyt)
+        node_info = next(
+            (n for n in nodes.getNodes() if n["id"] == selected_node_id), None
+        )
+        if node_info:
+            node_name.set_value(node_info["label"])
+    elif len(current_selection) == 0:
+        selected_node_id = None
+        status_label.set_text("Ingen node valgt.")
+        status_label.classes(replace="text-amber-600 font-mono")
+        node_name.set_value("")
+
+
+def handle_toggle_edge(e):
+    """Mottar de to nodene fra JavaScript og kjører Toggle-logikken."""
+    n1 = e.args.get("n1")
+    n2 = e.args.get("n2")
+
+    # Kjør logikken i nodes.py
+    result = nodes.toggleEdge(n1, n2)
+
+    if result == "added":
+        ui.notify(f"Opprettet kobling mellom node {n1} og {n2}!")
+    else:
+        ui.notify(
+            f"Fjernet koblingen mellom node {n1} og {n2}.", type="warning"
+        )
+
+    # Refresh grafen umiddelbart for å vise endringen live
+    mind_map_graph.render_graph_ui.refresh()
+
 # 2. Input fields and event listeners
 node_name = ui.textarea(
     label="Create new mind node",
@@ -101,6 +148,8 @@ node_name = ui.textarea(
 ).props("clearable autogrow").classes("w-96 mt-4")
 
 ui.on("node_selected", handle_node_selection)
+ui.on("nodes_tracked", handle_nodes_tracked)
+ui.on("toggle_edge_request", handle_toggle_edge)
 
 with ui.row().classes("gap-2 mt-2"):
     ui.button(
