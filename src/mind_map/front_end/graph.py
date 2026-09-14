@@ -15,6 +15,10 @@ class Graph:
 
             # Generate starter node
             for node in current_nodes:
+                # Check if a node has stored coordinate state
+                node_x = node.get("x", None)
+                node_y = node.get("y", None)
+
                 net.add_node(
                     node["id"],
                     label=node["label"],
@@ -32,7 +36,9 @@ class Graph:
                         "borderRadius": 6,  # Avrunder hjørnene på boksen (box)
                         "useImageSize": False,
                         "interpolation": False,  # Sikrer stabil tekst-padding
-                    }
+                    },
+                    x=node_x,
+                    y=node_y
                 )
 
             # 2. Security check SIKKERHETS-SJEKK FOR EDGES:
@@ -53,18 +59,17 @@ class Graph:
 
             # Disable physics to avoid unintentional scrambling
             net.set_options(
-                """
+                        """
                     {
-                      "physics": {
-                        "enabled": false
-                      },
+                      "physics": {"enabled": false},
                       "interaction": {
                         "dragNodes": true,
+                        "multiselect": true,
                         "hover": true
                       }
                     }
-                """
-                )
+                    """
+                    )
 
             html = net.generate_html()
 
@@ -75,12 +80,26 @@ class Graph:
                        if (typeof network !== 'undefined') {
                            var clickedNodes = [];
 
-                           network.on("click", function(params) {
-                               // Check if a user actually has selected a node
-                               var node_id = network.getNodeAt(params.pointer.DOM);
+                           // Listen for when a user is done moving a node
+                           network.on("dragEnd", function(params) {
+                               if (params.nodes.length > 0) {
+                                   var nodeId = params.nodes[0];
+                                   // Retrieve the exact coordinates via vis.js canvaset
+                                   var positions = network.getPositions([nodeId]);
+                                   var pos = positions[nodeId];
 
+                                   window.parent.postMessage({
+                                       event: 'node_moved',
+                                       id: nodeId,
+                                       x: Math.round(pos.x),
+                                       y: Math.round(pos.y)
+                                   }, '*');
+                               }
+                           });
+
+                           network.on("click", function(params) {
+                               var node_id = network.getNodeAt(params.pointer.DOM);
                                if (node_id !== undefined) {
-                                   // If a node is in the list, the user might have clicked twice -> remove it
                                    var index = clickedNodes.indexOf(node_id);
                                    if (index > -1) {
                                        clickedNodes.splice(index, 1);
@@ -88,23 +107,18 @@ class Graph:
                                        clickedNodes.push(node_id);
                                    }
 
-                                   // Send updated state to Python about what nodes are selected
                                    window.parent.postMessage({event: 'nodes_tracked', list: clickedNodes}, '*');
 
-                                   // The instant the user has selected TWO nodes:
                                    if (clickedNodes.length === 2) {
                                        window.parent.postMessage({
                                            event: 'toggle_edge_request',
                                            node1: clickedNodes[0],
                                            node2: clickedNodes[1]
                                        }, '*');
-
-                                       // Reset the chosen nodes in UI
                                        clickedNodes = [];
                                        network.unselectAll();
                                    }
                                } else {
-                                   // If the user does not click on a node reset the state
                                    clickedNodes = [];
                                    network.unselectAll();
                                    window.parent.postMessage({event: 'nodes_tracked', list: []}, '*');
