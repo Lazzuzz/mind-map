@@ -12,3 +12,4 @@ wheels/
 # Other
 *.db
 src/mind_map/mindmaps.db
+TODO.md

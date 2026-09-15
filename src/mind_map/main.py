@@ -180,7 +180,6 @@ def handle_nodes_tracked(e):
         status_label.classes(replace="text-amber-600 font-mono")
         node_name.set_value("")
 
-
 def handle_toggle_edge(e):
     """Received the two nodes from JavaScript and runs the Toggle-logic."""
     n1 = e.args.get("n1")
@@ -207,6 +206,23 @@ def handle_node_moved(e):
 
     # Lagre posisjonen i staten (nodes.py) i bakgrunnen uden å refreshe UI
     nodes.updateNodePosition(node_id, x, y)
+
+def clear_active_map():
+    global selected_node_id
+
+    # Reset the state in nodes.py
+    nodes.clearMap()
+
+    # Reset all pointers and input fields in GUI
+    selected_node_id = None
+    status_label.set_text("No node chosen as reference.")
+    status_label.classes(replace="text-amber-600 font-mono")
+    node_name.set_value("")
+    map_name_input.set_value("")
+
+    # Refresh the graph to render the reset map
+    mind_map_graph.render_graph_ui.refresh()
+    ui.notify("Active map has been cleared!")
 
 # 2. Input fields and event listeners
 node_name = ui.textarea(
@@ -259,6 +275,11 @@ with ui.row().classes("items-end gap-4 p-4 bg-slate-50 rounded-lg w-full"):
         label="Load existing map",
         on_change=load_selected_map,
     ).classes("w-48")
+
+    # Reset the map
+    ui.button(
+        "New Map", on_click=clear_active_map, color="grey-7"
+    ).props("icon=brightness_low").classes("ml-auto")
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(port=8080, reload=False)
