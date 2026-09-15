@@ -23,7 +23,6 @@ class Nodes:
         nodes_data = nodes
         edges_data = edges
 
-
     def getNrOfNodes(self) -> int:
         return len(nodes_data)
 
@@ -105,3 +104,17 @@ class Nodes:
         # 2. Delete the selected node from the node list
         global nodes_data
         nodes_data = [n for n in nodes_data if n["id"] != node_id]
+
+    def clearMap(self) -> None:
+            """Reset the active map back to starting position (a single node without edges)."""
+            global nodes_data, edges_data
+
+            nodes_data = [
+                {
+                    "id": 1,
+                    "label": "My new mind-map",
+                    "color": "#3b82f6",
+                    "shape": "box",
+                }
+            ]
+            edges_data = []
